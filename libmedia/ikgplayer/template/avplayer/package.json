@@ -1,0 +1,48 @@
+{
+  "name": "@ikigaians/ikgplayer-avplayer",
+  "version": "0.0.1",
+  "description": "libmedia avplayer",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ikigai-sigma-l/IKGPlayer.git"
+  },
+  "scripts": {
+    "prepublishOnly": "node ../../scripts/check-publish-status.js --package=avplayer"
+  },
+  "types": "./dist/types/AVPlayer.d.ts",
+  "module": "./dist/esm/avplayer.js",
+  "main": "./dist/umd/avplayer.js",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/avplayer.js",
+      "require": "./dist/umd/avplayer.js",
+      "types": "./dist/types/AVPlayer.d.ts"
+    },
+    "./AVPlayer": {
+      "types": "./dist/types/AVPlayer.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "author": "Gaoxing Zhao",
+  "license": "LGPL-3.0-or-later",
+  "dependencies": {
+    "@ikigaians/ikgplayer-common": "0.0.1",
+    "@ikigaians/ikgplayer-cheap": "0.0.1",
+    "@ikigaians/ikgplayer-avutil": "0.0.1",
+    "@ikigaians/ikgplayer-avprotocol": "0.0.1",
+    "@ikigaians/ikgplayer-avcodec": "0.0.1",
+    "@ikigaians/ikgplayer-avformat": "0.0.1",
+    "@ikigaians/ikgplayer-avpipeline": "0.0.1",
+    "@ikigaians/ikgplayer-avnetwork": "0.0.1",
+    "@ikigaians/ikgplayer-avrender": "0.0.1",
+    "@ikigaians/ikgplayer-audioresample": "0.0.1",
+    "@ikigaians/ikgplayer-audiostretchpitch": "0.0.1",
+    "ass-compiler": "^0.1.13",
+    "assjs": "^0.1.1"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "name": "@ikigaians/ikgplayer-audiostretchpitch",
+  "version": "0.0.1",
+  "description": "libmedia 音频变调变速",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ikigaians/studio-video-webplayer.git"
+  },
+  "scripts": {
+    "prepublishOnly": "node ../../scripts/check-publish-status.js --package=audiostretchpitch"
+  },
+  "files": [
+    "dist"
+  ],
+  "author": "Gaoxing Zhao",
+  "license": "LGPL-3.0-or-later",
+  "dependencies": {
+    "@ikigaians/ikgplayer-cheap": "0.0.1"
+  },
+  "exports": {
+    "./StretchPitcher": {
+      "import": "./dist/esm/StretchPitcher.js",
+      "require": "./dist/cjs/StretchPitcher.js",
+      "types": "./dist/esm/StretchPitcher.d.ts"
+    }
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
+}

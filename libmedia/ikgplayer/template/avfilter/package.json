@@ -1,0 +1,69 @@
+{
+  "name": "@ikigaians/ikgplayer-avfilter",
+  "version": "0.0.1",
+  "description": "libmedia filter 模块",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ikigaians/studio-video-webplayer.git"
+  },
+  "scripts": {
+    "prepublishOnly": "node ../../scripts/check-publish-status.js --package=avfilter"
+  },
+  "files": [
+    "dist"
+  ],
+  "author": "Gaoxing Zhao",
+  "license": "LGPL-3.0-or-later",
+  "dependencies": {
+    "@ikigaians/ikgplayer-common": "0.0.1",
+    "@ikigaians/ikgplayer-cheap": "0.0.1",
+    "@ikigaians/ikgplayer-avutil": "0.0.1",
+    "@ikigaians/ikgplayer-audioresample": "0.0.1",
+    "@ikigaians/ikgplayer-videoscale": "0.0.1"
+  },
+  "exports": {
+    "./AVFilterNode": {
+      "import": "./dist/esm/AVFilterNode.js",
+      "require": "./dist/cjs/AVFilterNode.js",
+      "types": "./dist/esm/AVFilterNode.d.ts"
+    },
+    "./AVInputNode": {
+      "import": "./dist/esm/AVInputNode.js",
+      "require": "./dist/cjs/AVInputNode.js",
+      "types": "./dist/esm/AVInputNode.d.ts"
+    },
+    "./AVOutputNode": {
+      "import": "./dist/esm/AVOutputNode.js",
+      "require": "./dist/cjs/AVOutputNode.js",
+      "types": "./dist/esm/AVOutputNode.d.ts"
+    },
+    "./RangeFilterNode": {
+      "import": "./dist/esm/RangeFilterNode.js",
+      "require": "./dist/cjs/RangeFilterNode.js",
+      "types": "./dist/esm/RangeFilterNode.d.ts"
+    },
+    "./graph": {
+      "import": "./dist/esm/graph.js",
+      "require": "./dist/cjs/graph.js",
+      "types": "./dist/esm/graph.d.ts"
+    },
+    "./audio/ResampleFilterNode": {
+      "import": "./dist/esm/audio/ResampleFilterNode.js",
+      "require": "./dist/cjs/audio/ResampleFilterNode.js",
+      "types": "./dist/esm/audio/ResampleFilterNode.d.ts"
+    },
+    "./video/FramerateFilterNode": {
+      "import": "./dist/esm/video/FramerateFilterNode.js",
+      "require": "./dist/cjs/video/FramerateFilterNode.js",
+      "types": "./dist/esm/video/FramerateFilterNode.d.ts"
+    },
+    "./video/ScaleFilterNode": {
+      "import": "./dist/esm/video/ScaleFilterNode.js",
+      "require": "./dist/cjs/video/ScaleFilterNode.js",
+      "types": "./dist/esm/video/ScaleFilterNode.d.ts"
+    }
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
+}

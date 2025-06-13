@@ -62,13 +62,29 @@ import * as is from 'common/util/is'
 import * as h264 from 'avutil/codecs/h264'
 import * as hevc from 'avutil/codecs/hevc'
 import * as vvc from 'avutil/codecs/vvc'
-import { IRtspFormatOptions } from 'avformat/formats/IRtspFormat'
-import { IFlvFormatOptions } from 'avformat/formats/IFlvFormat'
-import { IMovFormatOptions } from 'avformat/formats/IMovFormat'
-import { IH264FormatOptions } from 'avformat/formats/IH264Format'
-import { IHevcFormatOptions } from 'avformat/formats/IHevcFormat'
-import { IVvcFormatOptions } from 'avformat/formats/IVvcFormat'
+import IRtspFormat, { IRtspFormatOptions } from 'avformat/formats/IRtspFormat'
+import IFlvFormat, { IFlvFormatOptions } from 'avformat/formats/IFlvFormat'
+import IMovFormat, { IMovFormatOptions } from 'avformat/formats/IMovFormat'
+import IH264Format, { IH264FormatOptions } from 'avformat/formats/IH264Format'
+import IHevcFormat, { IHevcFormatOptions } from 'avformat/formats/IHevcFormat'
+import IVvcFormat, { IVvcFormatOptions } from 'avformat/formats/IVvcFormat'
 import support from 'common/util/support'
+import { NOPTS_VALUE_BIGINT } from 'avutil/constant'
+import { AVPlayerGlobalData } from './struct'
+import * as mutex from 'cheap/thread/mutex'
+import IMpegtsFormat from 'avformat/formats/IMpegtsFormat'
+import IMpegpsFormat from 'avformat/formats/IMpegpsFormat'
+import IIVFFormat from 'avformat/formats/IIvfFormat'
+import IOggFormat from 'avformat/formats/IOggFormat'
+import IMp3Format from 'avformat/formats/IMp3Format'
+import IMatroskaFormat from 'avformat/formats/IMatroskaFormat'
+import IAacFormat from 'avformat/formats/IAacFormat'
+import IFlacFormat from 'avformat/formats/IFlacFormat'
+import IWavFormat from 'avformat/formats/IWavFormat'
+import IWebVttFormat from 'avformat/formats/IWebVttFormat'
+import ISubRipFormat  from 'avformat/formats/ISubRipFormat'
+import IAssFormat from 'avformat/formats/IAssFormat'
+import ITtmlFormat from 'avformat/formats/ITtmlFormat'
 
 export const STREAM_INDEX_ALL = -1
 const MAX_QUEUE_LENGTH_DEFAULT = 5000
@@ -116,6 +132,8 @@ type SelfTask = DemuxTaskOptions & {
 export default class DemuxPipeline extends Pipeline {
 
   declare tasks: Map<string, SelfTask>
+  private baseTime: number = 0
+
 
   constructor() {
     super()
@@ -318,7 +336,8 @@ export default class DemuxPipeline extends Pipeline {
       switch (format) {
         case AVFormat.FLV:
           if (defined(ENABLE_DEMUXER_FLV)) {
-            iformat = new ((await import('avformat/formats/IFlvFormat')).default)(task.formatOptions as IFlvFormatOptions)
+            iformat = new IFlvFormat(task.formatOptions as IFlvFormatOptions)
+            //iformat = new ((await import('avformat/formats/IFlvFormat')).default)(task.formatOptions as IFlvFormatOptions)
           }
           else {
             logger.error('flv format not support, maybe you can rebuild avmedia')
@@ -327,7 +346,8 @@ export default class DemuxPipeline extends Pipeline {
           break
         case AVFormat.MP4:
           if (defined(ENABLE_DEMUXER_MP4) || defined(ENABLE_PROTOCOL_DASH)) {
-            iformat = new ((await import('avformat/formats/IMovFormat')).default)(task.formatOptions as IMovFormatOptions)
+            iformat = new IMovFormat(task.formatOptions as IMovFormatOptions)
+            //iformat = new ((await import('avformat/formats/IMovFormat')).default)(task.formatOptions as IMovFormatOptions)
           }
           else {
             logger.error('mp4 format not support, maybe you can rebuild avmedia')
@@ -336,7 +356,8 @@ export default class DemuxPipeline extends Pipeline {
           break
         case AVFormat.MPEGTS:
           if (defined(ENABLE_DEMUXER_MPEGPS) || defined(ENABLE_PROTOCOL_HLS)) {
-            iformat = new ((await import('avformat/formats/IMpegtsFormat')).default)
+            iformat = new IMpegtsFormat()
+            //iformat = new ((await import('avformat/formats/IMpegtsFormat')).default)
           }
           else {
             logger.error('mpegts format not support, maybe you can rebuild avmedia')
@@ -345,7 +366,8 @@ export default class DemuxPipeline extends Pipeline {
           break
         case AVFormat.MPEGPS:
           if (defined(ENABLE_DEMUXER_MPEGPS)) {
-            iformat = new ((await import('avformat/formats/IMpegpsFormat')).default)
+            iformat = new IMpegpsFormat()
+            //iformat = new ((await import('avformat/formats/IMpegpsFormat')).default)
           }
           else {
             logger.error('mpegps format not support, maybe you can rebuild avmedia')
@@ -354,7 +376,8 @@ export default class DemuxPipeline extends Pipeline {
           break
         case AVFormat.IVF:
           if (defined(ENABLE_DEMUXER_IVF)) {
-            iformat = new ((await import('avformat/formats/IIvfFormat')).default)
+            iformat = new IIVFFormat()
+            //iformat = new ((await import('avformat/formats/IIvfFormat')).default)
           }
           else {
             logger.error('ivf format not support, maybe you can rebuild avmedia')
@@ -363,7 +386,8 @@ export default class DemuxPipeline extends Pipeline {
           break
         case AVFormat.OGG:
           if (defined(ENABLE_DEMUXER_OGG)) {
-            iformat = new ((await import('avformat/formats/IOggFormat')).default)
+            iformat = new IOggFormat()
+            //iformat = new ((await import('avformat/formats/IOggFormat')).default)
           }
           else {
             logger.error('oggs format not support, maybe you can rebuild avmedia')
@@ -372,7 +396,8 @@ export default class DemuxPipeline extends Pipeline {
           break
         case AVFormat.MP3:
           if (defined(ENABLE_DEMUXER_MP3)) {
-            iformat = new ((await import('avformat/formats/IMp3Format')).default)
+            iformat = new IMp3Format()
+            //iformat = new ((await import('avformat/formats/IMp3Format')).default)
           }
           else {
             logger.error('mp3 format not support, maybe you can rebuild avmedia')
@@ -382,7 +407,8 @@ export default class DemuxPipeline extends Pipeline {
         case AVFormat.MATROSKA:
         case AVFormat.WEBM:
           if (defined(ENABLE_DEMUXER_MATROSKA)) {
-            iformat = new (((await import('avformat/formats/IMatroskaFormat')).default))
+            iformat = new IMatroskaFormat()
+            //iformat = new (((await import('avformat/formats/IMatroskaFormat')).default))
           }
           else {
             logger.error('matroska format not support, maybe you can rebuild avmedia')
@@ -391,7 +417,8 @@ export default class DemuxPipeline extends Pipeline {
           break
         case AVFormat.AAC:
           if (defined(ENABLE_DEMUXER_AAC)) {
-            iformat = new (((await import('avformat/formats/IAacFormat')).default))
+            iformat = new IAacFormat()
+            //iformat = new (((await import('avformat/formats/IAacFormat')).default))
           }
           else {
             logger.error('aac format not support, maybe you can rebuild avmedia')
@@ -400,7 +427,8 @@ export default class DemuxPipeline extends Pipeline {
           break
         case AVFormat.FLAC:
           if (defined(ENABLE_DEMUXER_FLAC)) {
-            iformat = new (((await import('avformat/formats/IFlacFormat')).default))
+            iformat = new IFlacFormat()
+            //iformat = new (((await import('avformat/formats/IFlacFormat')).default))
           }
           else {
             logger.error('flac format not support, maybe you can rebuild avmedia')
@@ -409,7 +437,8 @@ export default class DemuxPipeline extends Pipeline {
           break
         case AVFormat.WAV:
           if (defined(ENABLE_DEMUXER_WAV)) {
-            iformat = new (((await import('avformat/formats/IWavFormat')).default))
+            iformat = new IWavFormat()
+            //iformat = new (((await import('avformat/formats/IWavFormat')).default))
           }
           else {
             logger.error('wav format not support, maybe you can rebuild avmedia')
@@ -418,7 +447,8 @@ export default class DemuxPipeline extends Pipeline {
           break
         case AVFormat.WEBVTT:
           if (defined(ENABLE_DEMUXER_WEBVTT)) {
-            iformat = new (((await import('avformat/formats/IWebVttFormat')).default))
+            iformat = new IWebVttFormat()
+            //iformat = new (((await import('avformat/formats/IWebVttFormat')).default))
           }
           else {
             logger.error('webvtt format not support, maybe you can rebuild avmedia')
@@ -427,7 +457,8 @@ export default class DemuxPipeline extends Pipeline {
           break
         case AVFormat.SUBRIP:
           if (defined(ENABLE_DEMUXER_SUBRIP)) {
-            iformat = new (((await import('avformat/formats/ISubRipFormat')).default))
+            iformat = new ISubRipFormat()
+            //iformat = new (((await import('avformat/formats/ISubRipFormat')).default))
           }
           else {
             logger.error('subrip format not support, maybe you can rebuild avmedia')
@@ -436,7 +467,8 @@ export default class DemuxPipeline extends Pipeline {
           break
         case AVFormat.ASS:
           if (defined(ENABLE_DEMUXER_ASS)) {
-            iformat = new (((await import('avformat/formats/IAssFormat')).default))
+            iformat = new IAssFormat()
+            //iformat = new (((await import('avformat/formats/IAssFormat')).default))
           }
           else {
             logger.error('ass format not support, maybe you can rebuild avmedia')
@@ -445,7 +477,8 @@ export default class DemuxPipeline extends Pipeline {
           break
         case AVFormat.TTML:
           if (defined(ENABLE_DEMUXER_TTML)) {
-            iformat = new (((await import('avformat/formats/ITtmlFormat')).default))
+            iformat = new ITtmlFormat()
+            //iformat = new (((await import('avformat/formats/ITtmlFormat')).default))
           }
           else {
             logger.error('ttml format not support, maybe you can rebuild avmedia')
@@ -454,7 +487,8 @@ export default class DemuxPipeline extends Pipeline {
           break
         case AVFormat.H264:
           if (defined(ENABLE_DEMUXER_H264)) {
-            iformat = new (((await import('avformat/formats/IH264Format')).default))(task.formatOptions as IH264FormatOptions)
+            iformat = new IH264Format()
+            //iformat = new (((await import('avformat/formats/IH264Format')).default))(task.formatOptions as IH264FormatOptions)
           }
           else {
             logger.error('h264 format not support, maybe you can rebuild avmedia')
@@ -463,7 +497,8 @@ export default class DemuxPipeline extends Pipeline {
           break
         case AVFormat.HEVC:
           if (defined(ENABLE_DEMUXER_HEVC)) {
-            iformat = new (((await import('avformat/formats/IHevcFormat')).default))(task.formatOptions as IHevcFormatOptions)
+            iformat = new IHevcFormat(task.formatOptions as IHevcFormatOptions)
+            //iformat = new (((await import('avformat/formats/IHevcFormat')).default))(task.formatOptions as IHevcFormatOptions)
           }
           else {
             logger.error('hevc format not support, maybe you can rebuild avmedia')
@@ -472,7 +507,8 @@ export default class DemuxPipeline extends Pipeline {
           break
         case AVFormat.VVC:
           if (defined(ENABLE_DEMUXER_VVC)) {
-            iformat = new (((await import('avformat/formats/IVvcFormat')).default))(task.formatOptions as IVvcFormatOptions)
+            iformat = new IVvcFormat(task.formatOptions as IVvcFormatOptions)
+            //iformat = new (((await import('avformat/formats/IVvcFormat')).default))(task.formatOptions as IVvcFormatOptions)
           }
           else {
             logger.error('vvc format not support, maybe you can rebuild avmedia')
@@ -481,7 +517,8 @@ export default class DemuxPipeline extends Pipeline {
           break
         case AVFormat.RTSP:
           if (defined(ENABLE_PROTOCOL_RTSP)) {
-            iformat = new (((await import('avformat/formats/IRtspFormat')).default))(task.formatOptions as IRtspFormatOptions)
+            iformat = new IRtspFormat(task.formatOptions as IRtspFormatOptions)
+            //iformat = new (((await import('avformat/formats/IRtspFormat')).default))(task.formatOptions as IRtspFormatOptions)
           }
           else {
             logger.error('vvc format not support, maybe you can rebuild avmedia')
@@ -844,6 +881,50 @@ export default class DemuxPipeline extends Pipeline {
           }
           else {
             task.avpacketPool.release(avpacket)
+          }
+        }
+      }
+      // 在成功獲取到 AVPacket 後，將時間戳推入共享隊列
+      if (ret >= 0) {
+        const isKeyFrame = !!(avpacket.flags & AVPacketFlags.AV_PKT_FLAG_KEY);
+        
+        // 只有當是視頻封包且是關鍵幀時，才將時間戳推入共享隊列
+        if (task.formatContext.streams[streamIndex].codecpar.codecType === AVMediaType.AVMEDIA_TYPE_VIDEO && 
+            isKeyFrame) {  // 只有關鍵幀才推入
+          
+          // 確保 avpacket 有有效的時間戳
+          if (avpacket.pts !== NOPTS_VALUE_BIGINT) {
+            // 獲取全局數據
+            if (task.avpacketList !== nullptr && task.avpacketListMutex !== nullptr) {
+              // 計算 AVPlayerGlobalData 中 sharedTimeCodeList 和 sharedTimeCodeMutex 的偏移量
+              const globalDataPtr = reinterpret_cast<pointer<AVPlayerGlobalData>>(
+                reinterpret_cast<number>(task.avpacketList) - offsetof(AVPlayerGlobalData, "avpacketList")
+              );
+              
+              // 檢查 globalDataPtr 是否有效
+              if (globalDataPtr !== nullptr) {
+                // 使用正確的方式訪問 sharedTimeCodeList 和 sharedTimeCodeMutex
+                const sharedTimeCodeList = globalDataPtr.sharedTimeCodeList;
+                const sharedTimeCodeMutex = addressof(globalDataPtr.sharedTimeCodeMutex);
+
+                // 如果基準時間尚未設置，則設置為當前時間
+                if (this.baseTime === 0) {
+                  this.baseTime = Date.now();
+                }
+                
+                // 將 PTS 換算為 13 位 unixtime
+                const ptsNumber = Number(avpacket.pts);
+                const unixtime = this.baseTime + ptsNumber;
+      
+                // 鎖定 Mutex 並將時間戳推入隊列
+                mutex.lock(sharedTimeCodeMutex);
+                
+                // 使用換算後的 unixtime 而不是原始 PTS
+                sharedTimeCodeList.push(BigInt(unixtime));
+                
+                mutex.unlock(sharedTimeCodeMutex);                
+              }
+            }
           }
         }
       }
