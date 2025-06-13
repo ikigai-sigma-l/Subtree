@@ -1,0 +1,97 @@
+version 0.8.0:
+
+feat:
+  - feat(avrender): WritableStreamRender 支持旋转和翻转
+  - feat(avplayer): 支持 WebSocketOptions 传递 WebSocket 参数
+  - feat(avformat): flv 实现 enhanced-rtmp v2 规范，支持音频编码格式: ac3、eac3、opus、flac；视频编码格式: hevc、vp8、vp9、av1；支持高精度时间戳；支持多轨道；支持 HDR 元数据和声道元数据。规范文档地址: https://veovera.org/docs/enhanced/enhanced-rtmp-v2
+  - feat(avplayer): 支持不同音频编码格式的音频轨道间进行无感知切换
+
+bugfix:
+  - fix(avrender): 修复一些 gpu 内存资源的释放问题
+  - fix(avplayer): mse 模式下没有音频设置 muted 状态防止出现需要交互的错误
+  - fix(avplayer): 修复自定义 loader 在非多线程 worker 模式下出现一段 0 的脏数据
+  - fix(avplayer): 修复 mse 模式下只播放视频时，切换到后台视频会积压
+  - fix(avformat): flv 的 syncTag 方法添加判断 streamId 是否合法来加快分析，防止频繁的来回 seek
+  - fix(avplayer): mse 模式下音频轨道切换的一些兼容处理
+
+
+version 0.7.0:
+
+feat:
+  - refactor: pointer<void> 到 pointer<struct> 使用类型强转
+  - feat(avcodec): 音频编码器支持使用输入的 AVFrame 的 pts
+  - feat(dump): 新增 dump AVChannelLayout name
+  - feat(avplayer): AVPlayer 支持播放视频之后将音视频输出到 MediaStream
+  - feat(avrender): CanvasImageRender 支持 hdr 渲染
+  - refactor(avrender, avutil): 重写 image render 支持更多像素格式；重写 AVPixelFormatDescriptor 定义方式并支持更多格式
+
+bugfix:
+  - fix(avcodec): VideoDecoder safari 17.4 以上不需要手动排序输出帧
+  - fix(avformat): matroska blockGroup 非关键帧写入 BLOCK_REFERENCE
+  - fix(avpipeline): 发送 updateCanvas 事件判断 renderRedyed 状态防止多次触发
+  - fix: 使用 atomics.store 初始化 refCount 内存保证数据一致
+  - fix(avformat): 处理 mp4 的 mdat box size 超过 32 位的情况
+  - fix(avcodec): videoFrame.copyTo 是异步的， videoFrame2AVFrame 需要变成异步方法
+  - fix(avcodec): VideoEncoder 判断 frame.timeBase 是否合法再使用原 pts
+  - fix(avformat): 修复 mp4 edts box 的 delay 计算 timeBase 错误
+  - fix(avutil): 处理 AVFrame 和 AudioData 之间转换 pts 不合法的情况
+  - fix(avplayer): playChannels 超过 maxChannelCount 会无法播放出超出声道的声音，设置 playChannels 最大为 maxChannelCount 让 resampler 做 mix
+  - fix(avformat): mp4 seek 之后的第一个包应使用 ioReader.seek 来同步位置，防止等待过多的数据缓冲
+  - fix(avpipeline): 先找 webgpu render，找不到接着找 webgl render
+  - fix(avnetwork): 再次 readInterval 使用 SafeUint8Array, 防止中途扩堆导致 buffer 不可用
+
+
+version 0.6.1:
+
+feat:
+  - feat(avplayerui): 支持配置 footer，支持通过 url 参数控制 ui 和播放
+  - feat(avplayer): 添加 audioContextRunning 事件通知 audioContext 状态到 running
+  - feat(avplayerui): 自动播放时如果 audioContext 处于 suspended 状态给出提示
+  - feat(avformat): mp4 封装支持设置 matrix 配置，mse 播放支持 matrix
+  - avutil 中增加输出所有常量枚举为非常量枚举，可以在 js 中导入
+  - feat(avformat): 优化 dump 视频颜色参数信息
+
+bugfix:
+  - fix(avrender): 优化 hdr hlg Tone Mapping 计算，修正 hlg 曲线非线性转线性计算错误
+  - fix(avcodec): isConfigSupported 兼容抛错
+  - fix(avutil/av1): 调用 padding 之后再获取 buffer，防止出现少最后几 bit 数据
+
+version 0.6.0:
+
+feat:
+  - AVStream 的 metadata key 使用枚举，方便外层调用
+  - 重构 Decoder 和 Encoder 的 open 错误处理方式，将抛出错误改为返回错误码，与 decode 和 encode 方法保持一致
+  - AVPlayerLoadOptions 新增 isLive 配置可以覆盖 AVPlayerOptions 中的配置
+  - 添加对 AVFrame SideData 的处理
+  - 播放器自动检查音视频空帧并跳过
+  - 优化 mse 播放
+
+bugfix:
+  - mpegts 修复一些错误码返回不正确
+  - flv 的 extradata 时间戳使用当前 packet 的时间戳而不是 0
+  - mse 的一些边界条件判断修正
+
+version 0.5.0:
+
+feat:
+  - 支持 wasm64
+  - 对于 rtsp 和 matroska 等没有 dts 信息的封装格式使用 pts 来生成 dts 数据
+  - 分析流的帧率时自动调整到标准帧率
+  - maxAnalyzeDuration 默认值调整到 15 秒
+  - 优化 mux 对 stream 的 AVPacket 的请求处理，维持一个队列提高吞吐量
+  - VideoEncodePipeline 中 webcodecs 编码器优先使用 VideoFrame 提高编码效率
+  - 所有 pipeline 中使用性能更好的 avRescaleQ2 来做时间基转换
+  - 调整 VideoFrame 和 AudioData 使用 web 标准的微秒时间基
+  - 添加 getWasmUrl 方法作为内部获取 wasm url 的默认方法，getWasm 配置可选
+  - VideoDecodePipeline 兼容封装格式里面不能获取关键帧信息的情况，自己根据码流判断 h264、h265、h266 是否是关键帧
+
+bugfix:
+  - mp4 轨道时长计算不正确的问题
+  - matroska 当非音视频有 duration 或者 additional 时使用 blockGroup 来封装数据
+  - 分析流信息时到达 maxAnalyzeDuration 时长没有得到所有流信息继续分析直到得到所有流信息或者超过 15 秒
+  - 修复 VideoEncodePipeline 中硬编无法回退到软编 
+  - WebVideoDecoder annexb 码流支持 sps 和视频 nalu 分离的情况
+  - 修复音频渲染 loop 播放出现 frontBuffer 和 backBuffer 被释放的情况导致崩溃
+  - aac format 使用 adts 头里面的 samplerate 计算 dts，避免计算错误
+  - 一些构建系统的错误修复
+  - avplayer mse 在倍速条件下 loop 播放卡主的问题
